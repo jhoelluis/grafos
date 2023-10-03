@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  
+  <script>
+
+class GrafoDirigido {
+  constructor() {
+    this.nodos = new Map();
+  }
+
+  agregarNodo(nodo) {
+    if (!this.nodos.has(nodo)) {
+      this.nodos.set(nodo, new Map());
+    }
+  }
+
+  agregarArista(nodo1, nodo2, distancia) {
+    this.agregarNodo(nodo1);
+    this.agregarNodo(nodo2);
+    this.nodos.get(nodo1).set(nodo2, distancia);
+  }
+
+  encontrarCaminoMasCorto(desde, hasta) {
+    const distancias = new Map();
+    const visitados = new Set();
+
+    for (const nodo of this.nodos.keys()) {
+      distancias.set(nodo, nodo === desde ? 0 : Infinity);
+    }
+
+    while (true) {
+      let nodoActual = null;
+      let distanciaMinima = Infinity;
+
+      for (const [nodo, distancia] of distancias) {
+        if (!visitados.has(nodo) && distancia < distanciaMinima) {
+          nodoActual = nodo;
+          distanciaMinima = distancia;
+        }
+      }
+
+      if (nodoActual === null) {
+        break;
+      }
+
+      visitados.add(nodoActual);
+
+      for (const [vecino, distancia] of this.nodos.get(nodoActual)) {
+        const distanciaTentativa = distanciaMinima + distancia;
+        if (distanciaTentativa < distancias.get(vecino)) {
+          distancias.set(vecino, distanciaTentativa);
+        }
+      }
+    }
+
+    return distancias.get(hasta);
+  }
+
+  encontrarTodosLosCaminos(desde, hasta) {
+    const caminos = [];
+    const visitados = new Set();
+
+    const dfs = (nodo, camino) => {
+      if (nodo === hasta) {
+        caminos.push({ camino: camino.slice(), distancia: this.calcularDistancia(camino) });
+        return;
+      }
+
+      visitados.add(nodo);
+
+      for (const vecino of this.nodos.get(nodo).keys()) {
+        if (!visitados.has(vecino)) {
+          camino.push(vecino);
+          dfs(vecino, camino);
+          camino.pop();
+        }
+      }
+
+      visitados.delete(nodo);
+    };
+
+    if (this.nodos.has(desde)) {
+      dfs(desde, [desde]);
+    }
+
+    return caminos;
+  }
+
+  calcularDistancia(camino) {
+    let distancia = 0;
+    for (let i = 0; i < camino.length - 1; i++) {
+      const nodo1 = camino[i];
+      const nodo2 = camino[i + 1];
+      distancia += this.nodos.get(nodo1).get(nodo2);
+    }
+    return distancia;
+  }
+
+  obtenerVecinos(nodo) {
+    return Array.from(this.nodos.get(nodo).keys());
+  }
+}
+
+const grafo = new GrafoDirigido();
+grafo.agregarArista("A", "B", 2);
+grafo.agregarArista("A", "C", 1);
+grafo.agregarArista("B", "C", 3);
+grafo.agregarArista("B", "D", 4);
+grafo.agregarArista("C", "D", 2);
+grafo.agregarArista("C", "E", 5);
+grafo.agregarArista("D", "E", 3);
+
+const inicio = "A";
+const fin = "E";
+
+const distanciaMasCorta = grafo.encontrarCaminoMasCorto(inicio, fin);
+console.log("Distancia del camino más corto:", distanciaMasCorta);
+
+const todosLosCaminos = grafo.encontrarTodosLosCaminos(inicio, fin);
+
+
+todosLosCaminos.sort((a, b) => a.distancia - b.distancia);
+
+console.log("Todos los caminos desde el más corto hasta el más largo:");
+for (const camino of todosLosCaminos) {
+  console.log(camino.camino.join(" -> "), "Distancia:", camino.distancia);
+}
+
+const vecinos = grafo.obtenerVecinos("A");
+
+console.log("Vecinos de cada nodo:");
+for (const nodo of vecinos) {
+  console.log(`${nodo}: ${Array.from(grafo.nodos.get(nodo).keys()).join(", ")}`);
+}
+
+  </script>
+</body>
+</html>
